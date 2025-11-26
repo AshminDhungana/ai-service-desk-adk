@@ -66,7 +66,8 @@ Toggle between:
 ```
 ai-service-desk/
  ├── main.py                  # FastAPI backend (Gemini-enabled)
- ├── app.py                   # Streamlit chat UI
+ ├── app.py                    # Streamlit chat UI
+ ├── run.py                     #Runs Backend as well as Frontend together.       
  ├── src/
  │    ├── router_agent.py
  │    ├── agents/

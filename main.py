@@ -3,6 +3,7 @@ import sys
 import pathlib
 import logging
 import inspect
+import traceback
 from typing import Any, Dict, Optional
 
 
@@ -83,6 +84,144 @@ def _build_agent_safe():
 def health():
     return {"status": "ok", "agent_loaded": AGENT_INSTANCE is not None}
 
+
+
+# Robust ADK test endpoint — add to your FastAPI app
+@app.get("/adk-test-robust")
+async def adk_test_robust():
+    """
+    Inspect the built ADK agent and try various invocation patterns.
+    Returns either {'method': <used method>, 'reply': <text>} on success
+    or {'error':..., 'diagnostics': {...}} on failure.
+    """
+    try:
+        agent = _build_agent_safe()
+    except Exception as e:
+        return {"error": f"Agent init failed: {e}", "trace": traceback.format_exc()}
+
+    diag: Dict[str, Any] = {
+        "agent_type": type(agent).__name__,
+        "repr": repr(agent),
+    }
+
+    try:
+        attrs = sorted([a for a in dir(agent) if not a.startswith("_")])
+        diag["available_attrs"] = attrs
+    except Exception as e:
+        diag["available_attrs_error"] = str(e)
+
+    candidates = [
+        "run",
+        "invoke",
+        "predict",
+        "generate",
+        "respond",
+        "complete",
+        "call",
+        "__call__",
+    ]
+
+
+    payload = {"input": "Say 'Gemini ADK is working.'", "session": {}}
+    text_arg = "Say 'Gemini ADK is working.'"
+
+    last_exc = None
+    tried = []
+
+    async def _maybe_await(maybe_awaitable):
+        if inspect.isawaitable(maybe_awaitable):
+            return await maybe_awaitable
+        return maybe_awaitable
+
+    for name in candidates:
+        try:
+            if name == "__call__":
+          
+                if not callable(agent):
+                    tried.append({"name": name, "ok": False, "reason": "agent not callable"})
+                    continue
+                target = agent
+                call_desc = "callable(agent)(...)"
+            else:
+                if not hasattr(agent, name):
+                    tried.append({"name": name, "ok": False, "reason": "missing"})
+                    continue
+                target = getattr(agent, name)
+                if not callable(target):
+                    tried.append({"name": name, "ok": False, "reason": "not callable"})
+                    continue
+                call_desc = f"agent.{name}(...)"
+
+            for attempt_payload in (payload, text_arg):
+                try:
+
+                    resp = target(attempt_payload) if name == "__call__" else target(attempt_payload)
+                    resp = await _maybe_await(resp)
+
+                    reply = None
+                    if isinstance(resp, dict):
+                        # common fields
+                        reply = resp.get("reply") or resp.get("output") or resp.get("text") or resp.get("result")
+
+                        if reply is None:
+                            for k in ("response", "responses", "outputs", "candidates"):
+                                if k in resp and resp[k]:
+                                    reply = resp[k]
+                                    break
+                        if reply is None:
+                            reply = str(resp)
+                    else:
+
+                        reply = getattr(resp, "text", None) or getattr(resp, "output", None) or str(resp)
+
+                    return {
+                        "method": name if name != "__call__" else "callable(agent)",
+                        "used_payload_type": "dict" if attempt_payload is payload else "string",
+                        "reply": reply,
+                        "diagnostics": diag,
+                        "tried": tried,
+                    }
+                except Exception as e_inner:
+                    tried.append({"name": name, "payload": ("dict" if attempt_payload is payload else "string"),
+                                  "ok": False, "error": str(e_inner)})
+                    last_exc = traceback.format_exc()
+                    continue
+        except Exception as e_outer:
+            tried.append({"name": name, "ok": False, "error_outer": str(e_outer)})
+            last_exc = traceback.format_exc()
+            continue
+
+    if callable(agent):
+        for attempt_payload in (payload, text_arg):
+            try:
+                resp = agent(attempt_payload)
+                resp = await _maybe_await(resp)
+                reply = None
+                if isinstance(resp, dict):
+                    reply = resp.get("reply") or resp.get("output") or resp.get("text") or str(resp)
+                else:
+                    reply = getattr(resp, "text", None) or getattr(resp, "output", None) or str(resp)
+                return {
+                    "method": "callable(agent) direct",
+                    "used_payload_type": "dict" if attempt_payload is payload else "string",
+                    "reply": reply,
+                    "diagnostics": diag,
+                    "tried": tried,
+                }
+            except Exception as e:
+                tried.append({"name": "callable(agent) direct", "payload": ("dict" if attempt_payload is payload else "string"),
+                              "ok": False, "error": str(e)})
+                last_exc = traceback.format_exc()
+                continue
+
+    return {
+        "error": "No invocation pattern succeeded.",
+        "last_exception": last_exc,
+        "diagnostics": diag,
+        "tried": tried,
+    }
+
+    
 @app.post("/chat")
 async def chat(req: ChatRequest):
     """
@@ -122,6 +261,7 @@ async def chat(req: ChatRequest):
         logger.exception("Error calling agent: %s", exc)
         raise HTTPException(status_code=500, detail=f"Agent call error: {exc}")
 
+
     reply = None
     tool = None
     result = None
@@ -145,6 +285,8 @@ async def chat(req: ChatRequest):
         response_payload["session"] = session_out
 
     return response_payload
+
+
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "8000"))
