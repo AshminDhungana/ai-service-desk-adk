@@ -1,0 +1,21 @@
+# AI Agent Framework
+google-adk>=1.19.0
+
+# Web API and server
+fastapi>=0.115.0
+uvicorn>=0.30.0
+pydantic>=2.7.0
+
+# UI
+streamlit>=1.51.0
+requests>=2.31.0
+
+# Environment loader
+python-dotenv>=1.0.0
+
+# Data & utilities
+pillow>=10.0.0
+
+# Optional: for local demos and notebooks
+matplotlib>=3.7.0
+nbformat>=5.9.0

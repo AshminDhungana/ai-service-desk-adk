@@ -1,0 +1,47 @@
+[
+  {
+    "sku": "LAP-001",
+    "brand": "BrandA",
+    "model": "A123",
+    "price": 65000,
+    "stock": 3,
+    "category": "laptop",
+    "description": "BrandA A123 laptop - Core i5, 8GB RAM"
+  },
+  {
+    "sku": "LAP-002",
+    "brand": "BrandB",
+    "model": "B450",
+    "price": 78000,
+    "stock": 2,
+    "category": "laptop",
+    "description": "BrandB B450 laptop - Core i7, 16GB RAM"
+  },
+  {
+    "sku": "PRT-001",
+    "brand": "PrintCo",
+    "model": "PX-100",
+    "price": 22000,
+    "stock": 5,
+    "category": "printer",
+    "description": "PrintCo PX-100 printer - monochrome"
+  },
+  {
+    "sku": "CCTV-001",
+    "brand": "WatchCam",
+    "model": "WC-4K",
+    "price": 12500,
+    "stock": 10,
+    "category": "cctv",
+    "description": "WatchCam 4K outdoor camera"
+  },
+  {
+    "sku": "DSP-001",
+    "brand": "ViewTech",
+    "model": "VT-55",
+    "price": 45000,
+    "stock": 4,
+    "category": "display",
+    "description": "ViewTech 55\" Smart TV"
+  }
+]
