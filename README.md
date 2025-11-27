@@ -67,7 +67,7 @@ Toggle between:
 ai-service-desk/
  ├── main.py                  # FastAPI backend (Gemini-enabled)
  ├── app.py                    # Streamlit chat UI
- ├── run.py                     #Runs Backend as well as Frontend together.       
+ ├── run.py                    #Runs Backend as well as Frontend together.       
  ├── src/
  │    ├── router_agent.py
  │    ├── agents/
@@ -85,7 +85,7 @@ ai-service-desk/
  ├── notebooks/
  │    └── ai_service_desk_demo.ipynb
  ├── requirements.txt
- ├── .env.example
+ ├── .env
  └── README.md
 ```
 
@@ -118,6 +118,15 @@ pip install -r requirements.txt
 # ▶️ Running the System
 
 ## 1️⃣ Start Backend (Gemini-powered)
+
+Full app run:
+
+```
+python run.py
+
+```
+Backend Only:
+
 ```
 python main.py
 ```
