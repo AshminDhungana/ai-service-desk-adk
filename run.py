@@ -40,7 +40,7 @@ if __name__ == "__main__":
     # Start Streamlit frontend
     print("💬 Launching Streamlit UI (app.py) on http://localhost:8501 …")
     streamlit_proc = run_process(
-        ["streamlit", "run", str(APP_FILE)],
+        ["python", "-m", "streamlit", "run", str(APP_FILE)],
         "Streamlit"
     )
 

@@ -4,10 +4,22 @@ import re
 
 # ADK imports (guarded)
 try:
-    from google.adk.agents.llm_agent import Agent  
+    from google.adk.agents.llm_agent import LlmAgent as Agent
+    from google.genai import types
+    from google.adk.models.google_llm import Gemini
+    from google.adk.runners import InMemoryRunner
+    from google.adk.sessions import InMemorySessionService
+    from google.adk.tools import google_search, AgentTool, ToolContext
+    from google.adk.code_executors import BuiltInCodeExecutor 
 except Exception:
     Agent = None
 
+retry_config = types.HttpRetryOptions(
+    attempts=5,  
+    exp_base=7,  
+    initial_delay=1,
+    http_status_codes=[429, 500, 503, 504],  
+)
 
 try:
     from tools.get_ticket_status import get_ticket_status
@@ -49,7 +61,7 @@ Your job:
 5. Return outputs as a JSON-like dictionary.
 """
 
-def build_status_agent(model_name: str = "gemini-1") -> Any:
+def build_status_agent(model_name: str = "gemini-2.5-flash-lite") -> Any:
     """
     Build an ADK Agent instance for status retrieval.
     The ADK Agent constructor signature may vary across ADK versions.
@@ -57,7 +69,7 @@ def build_status_agent(model_name: str = "gemini-1") -> Any:
     if Agent is None:
         raise RuntimeError("google.adk is not installed. Cannot create ADK agent.")
     status_agent = Agent(
-        model=model_name,
+        model=Gemini(model=model_name, retry_options=retry_config),
         name="repair_status_agent",
         description="LLM-powered sub-agent that extracts ticket id and retrieves ticket status.",
         instruction=STATUS_INSTRUCTION,

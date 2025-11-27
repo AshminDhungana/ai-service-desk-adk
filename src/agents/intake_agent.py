@@ -3,10 +3,22 @@ import logging
 import re
 
 try:
-    from google.adk.agents.llm_agent import Agent  
+    from google.adk.agents.llm_agent import LlmAgent as Agent
+    from google.genai import types
+    from google.adk.models.google_llm import Gemini
+    from google.adk.runners import InMemoryRunner
+    from google.adk.sessions import InMemorySessionService
+    from google.adk.tools import google_search, AgentTool, ToolContext
+    from google.adk.code_executors import BuiltInCodeExecutor
 except Exception:
     Agent = None
 
+retry_config = types.HttpRetryOptions(
+    attempts=5, 
+    exp_base=7,  
+    initial_delay=1,
+    http_status_codes=[429, 500, 503, 504], 
+)
 
 try:
 
@@ -53,7 +65,7 @@ Your job:
 5. Output should be a JSON-like dictionary (or a Python dict when running locally).
 """
 
-def build_intake_agent(model_name: str = "gemini-1") -> Any:
+def build_intake_agent(model_name: str = "gemini-2.5-flash-lite") -> Any:
     """
     Create an ADK Agent instance configured for intake slot-filling.
     Requires google.adk to be installed. The exact Agent constructor may differ
@@ -64,7 +76,7 @@ def build_intake_agent(model_name: str = "gemini-1") -> Any:
 
     # The ADK Agent constructor/usage may differ; this is a template following course docs.
     intake_agent = Agent(
-        model=model_name,
+        model=Gemini(model=model_name, retry_options=retry_config),
         name="repair_intake_agent",
         description="LLM-powered sub-agent that extracts fields and creates repair tickets.",
         instruction=INTAKE_INSTRUCTION,

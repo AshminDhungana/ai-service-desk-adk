@@ -11,6 +11,12 @@ import os
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+retry_config = types.HttpRetryOptions(
+    attempts=5,  
+    exp_base=7,  
+    initial_delay=1,
+    http_status_codes=[429, 500, 503, 504],  
+)
 
 def _now_iso() -> str:
     return datetime.utcnow().isoformat() + "Z"

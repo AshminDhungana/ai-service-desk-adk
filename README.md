@@ -136,7 +136,7 @@ Endpoints:
 
 ## 2️⃣ Start Streamlit UI
 ```
-streamlit run app.py
+python -m streamlit run app.py
 ```
 
 Inside the UI:

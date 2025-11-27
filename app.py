@@ -1,4 +1,3 @@
-# app.py - Streamlit UI for AI Service Desk (compatible version)
 import streamlit as st
 import streamlit.components.v1 as components
 import sys
@@ -18,7 +17,7 @@ if ROOT_PATH not in sys.path:
 
 # Try to import router_agent local fallback
 try:
-    from router_agent import local_route as router_local_route
+    from src.router_agent import local_route as router_local_route
 except Exception:
     try:
         from src.router_agent import local_route as router_local_route
@@ -27,19 +26,19 @@ except Exception:
 
 # Agent fallbacks
 try:
-    from agents.intake_agent import local_intake_process
+    from src.agents.intake_agent import local_intake_process
 except Exception:
     def local_intake_process(msg):
         return {"status":"missing_info", "missing":["customer_name"], "reply":"intake agent not available."}
 
 try:
-    from agents.status_agent import local_status_process
+    from src.agents.status_agent import local_status_process
 except Exception:
     def local_status_process(msg):
         return {"status":"missing_info", "missing":["ticket_id"], "reply":"status agent not available."}
 
 try:
-    from agents.troubleshooting_agent import local_troubleshoot_process
+    from src.agents.troubleshooting_agent import local_troubleshoot_process
 except Exception:
     def local_troubleshoot_process(msg):
         return {"status":"missing_info", "reply":"troubleshooting agent not available."}
