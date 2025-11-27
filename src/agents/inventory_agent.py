@@ -8,6 +8,14 @@ import logging
 import tempfile
 import os
 
+from google.adk.agents.llm_agent import LlmAgent as Agent
+from google.genai import types
+from google.adk.models.google_llm import Gemini
+from google.adk.runners import InMemoryRunner
+from google.adk.sessions import InMemorySessionService
+from google.adk.tools import google_search, AgentTool, ToolContext
+from google.adk.code_executors import BuiltInCodeExecutor
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -263,17 +271,38 @@ class InventoryAgent:
         }
 
 if __name__ == "__main__":
-    agent = InventoryAgent(persist_path="/tmp/inventory_demo.json", autosave=True)
-    try:
-        agent.add_item({"serial": "SN1001", "model": "Dell XPS 13", "make": "Dell", "tags": ["laptop"]})
-        agent.add_item({"serial": "SN1002", "model": "Lenovo ThinkPad T14", "make": "Lenovo", "tags": ["laptop"]})
-        agent.add_item({"serial": "SN2001", "model": "HP LaserJet 1020", "make": "HP", "tags": ["printer"]})
-    except Exception:
-        pass
+    agent = InventoryAgent(persist_path="../../data/inventory.json", autosave=True)
 
-    print("Inventory summary:", agent.report_summary())
-    agent.allocate_device("SN1001", "alice@example.com", reason="New hire")
-    print("After allocation:", agent.get_item("SN1001"))
-    agent.release_device("SN1001")
-    print("After release:", agent.get_item("SN1001"))
+    print("=== Inventory Summary ===")
+    summary = agent.report_summary()
+    print("Inventory summary:", summary)
+    
+    print("\n=== Testing SN1001 (existing allocation history) ===")
+    item_1001 = agent.get_item("SN1001")
+    print("Current status:", item_1001.get("status"))
+    print("Current owner:", item_1001.get("owner"))
+    print("Allocations:", item_1001.get("allocations", []))
+    print("Releases:", item_1001.get("releases", []))
+    
+    print("\n=== Testing SN1002 (fresh item) ===")
+    item_1002 = agent.get_item("SN1002")
+    print("SN1002 before allocation:", item_1002)
+    
+    # Test allocation on SN1002
+    agent.allocate_device("SN1002", "bob@example.com", reason="Project assignment")
+    item_1002_after = agent.get_item("SN1002")
+    print("\nAfter allocation SN1002:", item_1002_after)
+    print("Allocations:", item_1002_after.get("allocations", []))
+    
+    # Test release
+    agent.release_device("SN1002")
+    item_1002_released = agent.get_item("SN1002")
+    print("\nAfter release SN1002:", item_1002_released)
+    print("Releases:", item_1002_released.get("releases", []))
+    
+    print("\n=== Testing SN2001 (printer) ===")
+    item_2001 = agent.get_item("SN2001")
+    print("SN2001:", item_2001)
+    
     agent.save()
+    print("\n All tests completed and saved!")

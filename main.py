@@ -125,7 +125,7 @@ async def chat(req: ChatRequest):
             reply = str(resp) if resp else "No reply"
     
     return {
-        "reply": reply or "Processed request",
+        "reply": reply,
         "tool": tool,
         "result": result,
         "session": req.session or {}
